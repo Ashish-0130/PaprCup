@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PaprCup | Anonymous Chat & Dating</title>
+    <meta name="description" content="Speak freely. Instant anonymous chat with no login, no history, and no tracking. Connect with people nearby or globally.">
+    <meta name="keywords" content="anonymous chat, stranger chat, talk to strangers, no login chat, ephemeral messaging, private chat">
+    
+    <!-- Open Graph for Social Sharing -->
+    <meta property="og:title" content="PaprCup - Speak Freely">
+    <meta property="og:description" content="No login. No history. Just real connections.">
+    <meta property="og:type" content="website">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+    
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body>
+
+    <!-- The Backdrop Container: Floats like a card on desktop, full width on mobile -->
+    <div class="app-container">
+        
+        <!-- HEADER -->
+        <header class="glass-header">
+            <div class="logo">PaprCup<span class="dot">.</span></div>
+            <div class="online-status">
+                <span class="pulse-dot"></span> Live
+            </div>
+        </header>
+
+        <!-- VIEW 1: LANDING / SETUP -->
+        <main id="view-setup" class="view active">
+            <div class="hero-text">
+                <h1>Speak Freely.</h1>
+                <p>No login. No history. Just now.</p>
+            </div>
+
+            <form id="setup-form" class="glass-card">
+                <!-- Softened Filters -->
+                <div class="row-group">
+                    <div class="input-group">
+                        <label for="gender">You are...</label>
+                        <select id="gender">
+                            <option value="any" selected>Prefer not to say</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="non-binary">Non-Binary</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="looking_for">Open to talking with...</label>
+                        <select id="looking_for">
+                            <option value="any" selected>Everyone</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="bio" placeholder="Short Bio (e.g., 'Music lover 🎵')" maxlength="50" autocomplete="off">
+                </div>
+
+                <!-- Optional Proximity -->
+                <div class="toggle-group">
+                    <input type="checkbox" id="premium-toggle">
+                    <label for="premium-toggle">Prioritize nearby people (Optional)</label>
+                </div>
+
+                <button type="submit" class="btn-primary">Start Talking</button>
+                
+                <!-- Trust / Safety Signal -->
+                <div class="safety-signal">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>No accounts. No storage. Chats disappear on exit.</span>
+                </div>
+            </form>
+        </main>
+
+        <!-- VIEW 2: SEARCHING -->
+        <main id="view-searching" class="view hidden">
+            <div class="radar-container">
+                <div class="radar-circle"></div>
+                <div class="radar-circle delay-1"></div>
+                <div class="radar-circle delay-2"></div>
+                <div class="avatar-center">?</div>
+            </div>
+            <p class="status-text">Connecting you...</p>
+        </main>
+
+        <!-- VIEW 3: CHAT -->
+        <main id="view-chat" class="view hidden">
+            <div class="chat-header-bar">
+                <div class="partner-info">
+                    <div class="avatar-small"></div>
+                    <span id="partner-bio">Stranger</span>
+                </div>
+                <button id="btn-skip" class="btn-danger">Next Partner ➜</button>
+            </div>
+
+            <div id="chat-feed" class="chat-feed">
+                <!-- Messages will be injected here via JS -->
+                <div class="system-message">You are connected. Say hi!</div>
+            </div>
+
+            <!-- Floating Input Pill -->
+            <div class="chat-input-area">
+                <label for="img-input" class="icon-btn" title="Send Image">📷</label>
+                <input type="file" id="img-input" accept="image/*" hidden>
+                
+                <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off">
+                <button id="btn-send" class="icon-btn-send">➜</button>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/ui_controller.js"></script>
+    <script src="/static/js/socket_client.js"></script>
+</body>
+</html>
