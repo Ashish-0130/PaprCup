@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -5,45 +6,48 @@ import socketio
 from app.manager import manager
 from app.utils import sanitize_message
 
-# Initialize FastAPI App
-app = FastAPI(docs_url=None, redoc_url=None) # Hide docs for production
+# 1. Initialize FastAPI
+fastapi_app = FastAPI(docs_url=None, redoc_url=None)
 
-# Setup Template Engine (Jinja2) and Static Files
+# 2. Setup Assets
 templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+fastapi_app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Initialize Async Socket.IO Server
-# CORS set to '*' allows connections from any domain (useful for dev/testing)
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
-socket_app = socketio.ASGIApp(sio, app)
+# 3. Initialize Socket.IO with Render-specific CORS
+# We allow specific origins to prevent blocking mobile browsers
+sio = socketio.AsyncServer(
+    async_mode='asgi',
+    cors_allowed_origins=[
+        "https://paprcup.onrender.com", 
+        "http://paprcup.onrender.com",
+        "*"  # Fallback for testing
+    ],
+    logger=True,  # Enable internal socket logs for debugging
+    engineio_logger=True
+)
+
+# 4. Wrap FastAPI
+app = socketio.ASGIApp(sio, fastapi_app)
 
 # --- HTTP Routes ---
 
-@app.get("/")
+@fastapi_app.get("/")
 async def get_home(request: Request):
-    """Serves the main SPA (Single Page Application) HTML."""
     return templates.TemplateResponse("index.html", {"request": request})
 
 # --- WebSocket Events ---
 
 @sio.event
 async def connect(sid, environ):
-    """
-    Called when a client connects via WebSocket.
-    Note: Real logic happens in 'join_queue' when we have user data.
-    """
-    pass
+    print(f"✅ Client connected: {sid}")
 
 @sio.event
 async def join_queue(sid, data):
-    """
-    User clicks 'Start Talking'. 
-    We validate their data and try to find a match.
-    """
-    # 1. Sanitize Inputs (Security)
-    clean_bio = sanitize_message(data.get('bio', ''))[:50] # Limit to 50 chars
+    print(f"📝 User {sid} joining queue with preferences: {data.get('looking_for')}")
     
-    # 2. Store User Data
+    # Sanitize inputs
+    clean_bio = sanitize_message(data.get('bio', ''))[:50]
+    
     user_data = {
         "bio": clean_bio,
         "gender": data.get("gender", "any"),
@@ -52,71 +56,64 @@ async def join_queue(sid, data):
         "lon": data.get("lon"),
         "is_premium": bool(data.get("is_premium", False))
     }
+    
+    # Register user
     await manager.connect(sid, user_data)
     
-    # 3. Attempt Matchmaking
+    # Attempt to find a match
     match_sid = manager.find_match(sid)
     
     if match_sid:
-        # Match Found! Create a unique room.
-        room_id = f"{sid}_{match_sid}"
+        print(f"🎉 MATCH FOUND: {sid} <--> {match_sid}")
         
-        # Link both users to this room
+        # Create a unique room ID
+        room_id = f"room_{sid[:4]}_{match_sid[:4]}"
+        
+        # Update Manager State
         manager.assign_room(sid, room_id)
         manager.assign_room(match_sid, room_id)
         
-        # Move sockets into the room
+        # Move Sockets into Room
         await sio.enter_room(sid, room_id)
         await sio.enter_room(match_sid, room_id)
         
-        # Notify both users (Exchange Bios)
+        # Get Profiles to swap
         p1 = manager.get_user(sid)
         p2 = manager.get_user(match_sid)
         
-        await sio.emit('match_found', {'bio': p2['bio']}, room=sid)
-        await sio.emit('match_found', {'bio': p1['bio']}, room=match_sid)
+        # Notify Both Users
+        await sio.emit('match_found', {'bio': p2.get('bio', 'Stranger')}, room=sid)
+        await sio.emit('match_found', {'bio': p1.get('bio', 'Stranger')}, room=match_sid)
     else:
-        # No match yet, tell client to wait
+        print(f"⏳ No match yet for {sid}. Waiting in queue...")
         await sio.emit('waiting', {}, room=sid)
 
 @sio.event
 async def send_message(sid, data):
-    """
-    Relays a chat message to the partner in the room.
-    """
     room_id = manager.get_room(sid)
     if room_id:
-        # Sanitize text content before relaying
         if data.get('type') == 'text':
             data['content'] = sanitize_message(data.get('content', ''))
-            
-        # Send to everyone in room EXCEPT sender (skip_sid)
+        
+        # Relay message to the room (excluding sender)
         await sio.emit('receive_message', data, room=room_id, skip_sid=sid)
 
 @sio.event
 async def skip_partner(sid):
-    """
-    User clicked 'Next'. We notify the partner and clean up room state.
-    """
+    print(f"🚫 User {sid} skipped partner")
     room_id = manager.get_room(sid)
     if room_id:
-        await sio.emit('partner_left', {}, room=room_id)
-        # Note: We don't disconnect sockets here, just logic.
-        # The client will re-emit 'join_queue' automatically.
+        # Notify the partner
+        await sio.emit('partner_left', {}, room=room_id, skip_sid=sid)
+        
+        # Both leave the room logic is handled by the client resetting, 
+        # but we clean up server side too:
+        manager.cleanup_room(room_id)
 
 @sio.event
 async def disconnect(sid):
-    """
-    User closed tab or lost connection.
-    """
+    print(f"❌ Client disconnected: {sid}")
     room_id = manager.get_room(sid)
     if room_id:
         await sio.emit('partner_left', {}, room=room_id)
-    
-    # Clean up all memory references
     manager.disconnect(sid)
-
-# Entry point for local debugging
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(socket_app, host="0.0.0.0", port=8000)

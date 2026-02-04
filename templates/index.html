@@ -3,14 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PaprCup | Anonymous Chat & Dating</title>
-    <meta name="description" content="Speak freely. Instant anonymous chat with no login, no history, and no tracking. Connect with people nearby or globally.">
-    <meta name="keywords" content="anonymous chat, stranger chat, talk to strangers, no login chat, ephemeral messaging, private chat">
     
-    <!-- Open Graph for Social Sharing -->
-    <meta property="og:title" content="PaprCup - Speak Freely">
-    <meta property="og:description" content="No login. No history. Just real connections.">
+    <!-- SEO: Primary Meta Tags -->
+    <title>PaprCup | Free Anonymous Chat & Dating - No Login Required</title>
+    <meta name="description" content="Chat instantly with strangers on PaprCup. No login, no registration, no tracking. Experience free anonymous chat and dating with people nearby or globally.">
+    <meta name="keywords" content="anonymous chat, talk to strangers, free chat rooms, no login chat, random chat, private messaging, stranger dating">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://yourdomain.com/">
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourdomain.com/">
+    <meta property="og:title" content="PaprCup - Speak Freely with Strangers">
+    <meta property="og:description" content="Zero footprint messaging. No accounts. No history. Just real connections.">
+    <meta property="og:image" content="https://yourdomain.com/static/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="PaprCup | Anonymous Chat">
+    <meta property="twitter:description" content="Instant anonymous connections. No login required.">
+
+    <!-- Structured Data (Schema.org) for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "PaprCup",
+      "applicationCategory": "SocialNetworkingApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "A privacy-focused anonymous chat application that allows users to connect with strangers instantly without registration or data storage."
+    }
+    </script>
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="/static/css/theme.css">
@@ -21,14 +49,14 @@
 </head>
 <body>
 
-    <!-- The Backdrop Container: Floats like a card on desktop, full width on mobile -->
+    <!-- The Backdrop Container -->
     <div class="app-container">
         
         <!-- HEADER -->
         <header class="glass-header">
             <div class="logo">PaprCup<span class="dot">.</span></div>
             <div class="online-status">
-                <span class="pulse-dot"></span> Live
+                <span class="pulse-dot"></span> <span id="status-label">Live</span>
             </div>
         </header>
 
@@ -40,11 +68,10 @@
             </div>
 
             <form id="setup-form" class="glass-card">
-                <!-- Softened Filters -->
                 <div class="row-group">
                     <div class="input-group">
                         <label for="gender">You are...</label>
-                        <select id="gender">
+                        <select id="gender" name="gender">
                             <option value="any" selected>Prefer not to say</option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -54,7 +81,7 @@
                     
                     <div class="input-group">
                         <label for="looking_for">Open to talking with...</label>
-                        <select id="looking_for">
+                        <select id="looking_for" name="looking_for">
                             <option value="any" selected>Everyone</option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -74,10 +101,9 @@
 
                 <button type="submit" class="btn-primary">Start Talking</button>
                 
-                <!-- Trust / Safety Signal -->
                 <div class="safety-signal">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <span>No accounts. No storage. Chats disappear on exit.</span>
+                    <span>Chats disappear forever on exit.</span>
                 </div>
             </form>
         </main>
@@ -100,15 +126,14 @@
                     <div class="avatar-small"></div>
                     <span id="partner-bio">Stranger</span>
                 </div>
-                <button id="btn-skip" class="btn-danger">Next Partner ➜</button>
+                <button id="btn-skip" class="btn-danger">Next ➜</button>
             </div>
 
             <div id="chat-feed" class="chat-feed">
-                <!-- Messages will be injected here via JS -->
+                <!-- Messages injected here -->
                 <div class="system-message">You are connected. Say hi!</div>
             </div>
 
-            <!-- Floating Input Pill -->
             <div class="chat-input-area">
                 <label for="img-input" class="icon-btn" title="Send Image">📷</label>
                 <input type="file" id="img-input" accept="image/*" hidden>
